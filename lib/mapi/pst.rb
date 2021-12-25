@@ -1147,7 +1147,7 @@ puts ole.root.to_tree
 			# this is PT_MV_STRING8, i guess.
 			# should probably have the 0x1000 flag, and do the or-ring.
 			# example of 0x1102 is PR_OUTLOOK_2003_ENTRYIDS. less sure about that one.
-			when 0x101e, 0x1102 
+			when 0x101e, 0x1102
 				# example data:
 				# 0x802b "\003\000\000\000\020\000\000\000\030\000\000\000#\000\000\000BusinessCompetitionFavorites"
 				# this 0x802b would be an extended attribute for categories / keywords.
@@ -1156,6 +1156,12 @@ puts ole.root.to_tree
 				offsets = value[4, 4 * num].unpack("V#{num}")
 				value = (offsets + [value.length]).to_enum(:each_cons, 2).map { |from, to| value[from...to] }
 				value.map! { |str| StringIO.new str } if type == 0x1102
+			when 0x101f
+				value = get_data_indirect_io(value).read unless String === value
+				num = value.unpack('V')[0]
+				offsets = value[4, 4 * num].unpack("V#{num}")
+				value = (offsets + [value.length]).to_enum(:each_cons, 2).map { |from, to| value[from...to] }
+				value.map! { |str| Ole::Types::FROM_UTF16.iconv str }
 			when 0x1003
 				# PtypMultipleInteger32
 			else
